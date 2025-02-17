@@ -20,7 +20,7 @@ echo -e "${CYAN}
 ██████╔╝██║  ██║██████╔╝
 ╚═════╝ ╚═╝  ╚═╝╚═════╝  
 ${RESET}"
-echo -e "${GREEN}★ Chrome Remote Desktop Setup with Wine & Firefox ★${RESET}"
+echo -e "${GREEN}★ Chrome Remote Desktop Setup with Firefox ★${RESET}"
 echo
 
 # Instructions to get CRD Code
@@ -56,8 +56,14 @@ create_user() {
     # Allow sudo without password
     echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
     
-    # Set correct ownership for home directory
-    chown -R "$USERNAME":"$USERNAME" /home/"$USERNAME"
+    # Disable password login for the new user
+    passwd -d "$USERNAME"
+    passwd -l "$USERNAME"
+
+    # Add PATH update to .bashrc of the new user
+    echo 'export PATH=$PATH:/home/$USERNAME/.local/bin' >> /home/"$USERNAME"/.bashrc
+    # Reload .bashrc for the new user
+    su - "$USERNAME" -c "source ~/.bashrc"
 
     echo -e "${GREEN}[✔] User '$USERNAME' created successfully${RESET}"
 }
@@ -70,7 +76,7 @@ install_packages() {
                    python3-packaging python3-psutil python3-xdg libgbm1 libutempter0 \
                    libfuse2 nload ffmpeg gpac fonts-lklug-sinhala \
                    xfce4 desktop-base xfce4-terminal xfce4-session xscreensaver \
-                   dbus-x11 dbus firefox wine64
+                   dbus-x11 dbus firefox
 
     # Remove gnome-terminal to avoid conflicts
     apt remove -y gnome-terminal
@@ -101,9 +107,10 @@ install_crd() {
 setup_storage() {
     echo -e "${BLUE}[+] Setting up storage...${RESET}"
     mkdir -p /storage
-    chmod 770 /storage
+    chmod 777 /storage
     chown "$USERNAME":"$USERNAME" /storage
-    ln -s /storage /home/"$USERNAME"/storage
+    mkdir -p /home/"$USERNAME"/storage
+    mount --bind /storage /home/"$USERNAME"/storage
 
     echo -e "${GREEN}[✔] Storage setup complete${RESET}"
 }
