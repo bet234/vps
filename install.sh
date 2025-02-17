@@ -3,8 +3,37 @@
 # Set DEBIAN_FRONTEND to noninteractive to suppress prompts
 export DEBIAN_FRONTEND=noninteractive
 
-# Ask for CRD Code early
-read -p "Paste the CRD command here: " CRD
+# Colors for styling
+GREEN="\e[32m"
+YELLOW="\e[33m"
+RED="\e[31m"
+BLUE="\e[34m"
+CYAN="\e[36m"
+RESET="\e[0m"
+
+# ASCII Art Banner
+echo -e "${CYAN}
+██████╗ ██████╗ ██████╗ 
+██╔══██╗██╔══██╗██╔══██╗
+██║  ██║██████╔╝██║  ██║
+██║  ██║██╔══██╗██║  ██║
+██████╔╝██║  ██║██████╔╝
+╚═════╝ ╚═╝  ╚═╝╚═════╝  
+${RESET}"
+echo -e "${GREEN}★ Chrome Remote Desktop Setup with Wine & Firefox ★${RESET}"
+echo
+
+# Instructions to get CRD Code
+echo -e "${YELLOW}How to Get Your Chrome Remote Desktop (CRD) Code:${RESET}"
+echo -e "${CYAN}1.${RESET} Open this link in your browser: ${BLUE}https://remotedesktop.google.com/headless${RESET}"
+echo -e "${CYAN}2.${RESET} Sign in with your Google account."
+echo -e "${CYAN}3.${RESET} Click on ${GREEN}'Set up another computer'${RESET} and follow the steps."
+echo -e "${CYAN}4.${RESET} Copy the command shown for Debian Linux."
+echo -e "${CYAN}5.${RESET} Paste the copied command below when prompted."
+echo
+
+# Ask for CRD Code
+read -p "$(echo -e ${YELLOW}">>> Paste the CRD command here: "${RESET})" CRD
 
 # Default user credentials
 USERNAME="user"
@@ -13,13 +42,13 @@ PIN="123456"
 
 # Ensure script runs as root
 if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root"
+   echo -e "${RED}[✘] This script must be run as root${RESET}"
    exit 1
 fi
 
-# Create and configure user
+# Function: Create and configure user
 create_user() {
-    echo "[+] Creating user: $USERNAME"
+    echo -e "${BLUE}[+] Creating user: $USERNAME${RESET}"
     useradd -m -s /bin/bash "$USERNAME"
     echo "$USERNAME:$PASSWORD" | chpasswd
     usermod -aG sudo "$USERNAME"
@@ -30,12 +59,12 @@ create_user() {
     # Set correct ownership for home directory
     chown -R "$USERNAME":"$USERNAME" /home/"$USERNAME"
 
-    echo "[+] User '$USERNAME' created with password '$PASSWORD'"
+    echo -e "${GREEN}[✔] User '$USERNAME' created successfully${RESET}"
 }
 
-# Install required packages
+# Function: Install required packages
 install_packages() {
-    echo "[+] Updating and installing packages..."
+    echo -e "${BLUE}[+] Updating and installing packages...${RESET}"
     apt update && apt upgrade -y
     apt install -y wget curl xvfb xserver-xorg-video-dummy xbase-clients \
                    python3-packaging python3-psutil python3-xdg libgbm1 libutempter0 \
@@ -45,16 +74,18 @@ install_packages() {
 
     # Remove gnome-terminal to avoid conflicts
     apt remove -y gnome-terminal
+
+    echo -e "${GREEN}[✔] Packages installed successfully${RESET}"
 }
 
-# Install Chrome Remote Desktop
+# Function: Install Chrome Remote Desktop
 install_crd() {
-    echo "[+] Installing Chrome Remote Desktop..."
+    echo -e "${BLUE}[+] Installing Chrome Remote Desktop...${RESET}"
     wget https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
     dpkg --install chrome-remote-desktop_current_amd64.deb || apt install -f -y
     rm chrome-remote-desktop_current_amd64.deb
 
-    echo "[+] Configuring CRD for user..."
+    echo -e "${BLUE}[+] Configuring CRD for user...${RESET}"
     adduser "$USERNAME" chrome-remote-desktop
     echo "exec /etc/X11/Xsession /usr/bin/xfce4-session" > /etc/chrome-remote-desktop-session
     systemctl disable lightdm.service
@@ -62,17 +93,19 @@ install_crd() {
     # Start CRD with PIN
     su - "$USERNAME" -c "$CRD --pin=$PIN"
     systemctl enable --now chrome-remote-desktop
-    
-    echo "[+] Chrome Remote Desktop setup complete"
+
+    echo -e "${GREEN}[✔] Chrome Remote Desktop setup complete${RESET}"
 }
 
-# Setup storage directory
+# Function: Setup storage directory
 setup_storage() {
-    echo "[+] Setting up storage..."
+    echo -e "${BLUE}[+] Setting up storage...${RESET}"
     mkdir -p /storage
     chmod 770 /storage
     chown "$USERNAME":"$USERNAME" /storage
     ln -s /storage /home/"$USERNAME"/storage
+
+    echo -e "${GREEN}[✔] Storage setup complete${RESET}"
 }
 
 # Run all functions
@@ -81,4 +114,9 @@ install_packages
 install_crd
 setup_storage
 
-echo "[✔] Setup complete. Use Chrome Remote Desktop to connect."
+echo -e "${CYAN}
+╔════════════════════════════════════╗
+║  🎉 ${GREEN}Setup Complete! Connect using CRD${CYAN} 🎉  ║
+║  Use this link: ${BLUE}https://remotedesktop.google.com/access${CYAN}  ║
+╚════════════════════════════════════╝
+${RESET}"
