@@ -103,23 +103,10 @@ install_crd() {
     echo -e "${GREEN}[✔] Chrome Remote Desktop setup complete${RESET}"
 }
 
-# Function: Setup storage directory
-setup_storage() {
-    echo -e "${BLUE}[+] Setting up storage...${RESET}"
-    mkdir -p /storage
-    chmod 777 /storage
-    chown "$USERNAME":"$USERNAME" /storage
-    mkdir -p /home/"$USERNAME"/storage
-    mount --bind /storage /home/"$USERNAME"/storage
-
-    echo -e "${GREEN}[✔] Storage setup complete${RESET}"
-}
-
 # Run all functions
 create_user
 install_packages
 install_crd
-setup_storage
 
 echo -e "${CYAN}
 ╔════════════════════════════════════╗
